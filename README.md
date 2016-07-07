@@ -1,3 +1,6 @@
+# Todo
+* Update readme
+
 # kirbytag html5video
 by Jannik Beyerstedt from Hamburg, Germany
 [jannikbeyerstedt.de](http://jannikbeyerstedt.de) | [Github](https://github.com/jbeyerstedt)
