@@ -13,50 +13,72 @@
  * - v2.2: autodetection for poster file
  */
 
-kirbytext::$tags['html5video'] = array(
+kirbytext::$tags['sublime'] = array(
   'attr' => array(
-    'hls',
-    'h264',
-    'webm'
+    'width',
+    'height',
+    'name'
   ),
   'html' => function($tag) {
-    $source = $tag->attr('html5video');
+    $source = $tag->attr('sublime');
+    $page   = $tag->page();
+    $baseurl =  '/' . $page->url() . '/';
 
-    $baseurl =  url('/video/');
-    $posterurl = $baseurl . urlencode($source) . '-poster.png';
+    $width = $tag->attr('width');
+    if(!$width)  $width  = c::get('kirbytext.video.width');
+    $height = $tag->attr('height');
+    if(!$height) $height = c::get('kirbytext.video.height');
+    $name = $tag->attr('name');
+    
+    // gather all video files which match the given id/name    
+    
 
+    foreach($page->videos() as $v) {
+    
 
-    if ($tag->attr('hls') === null || strtolower($tag->attr('hls')) === 'true' ) {
-      $hlsurl = $baseurl . urlencode($source) . '-hls/' . urlencode($source) . '-index.m3u8';
-      $hlssource = '<source src="' . $hlsurl . '" type="application/x-mpegurl">';}
-    else {
-      $hlssource = "";}
+      if(preg_match('!^' . preg_quote($source) . '!i', $v->name())) {
+        $extension = f::extension($v->name());
+        $mobile    = ($extension == 'mobile') ? $v->mobile = true : $v->mobile = false;
+        $hd        = ($extension == 'hd')     ? $v->hd     = true : $v->hd     = false;
+        $videos[] = $v;
 
-    if ($tag->attr('h264') === null || strtolower($tag->attr('h264')) === 'true' ) {
-      $mp4url = $baseurl . urlencode($source) . '-h264.mp4';
-      $mp4source = '<source src="' . $mp4url . '" type="video/mp4">';}
-    else {
-      $mp4source = "";}
+      }
 
-    if ($tag->attr('webm') === null || strtolower($tag->attr('webm')) === 'true' ) {
-      $webmurl = $baseurl . urlencode($source) . '-webm.webm';
-      $webmsource = '<source src="' . $webmurl . '" type="video/webm">';}
-    else {
-      $webmsource = "";}
-
-    if (file_exists($source . '-poster.png')) {
-      $postersource = 'poster="' . $posterurl . '"';
-    }else {
-      $postersource = '';
     }
+    
+    if(empty($videos)) return false;    
+
+    // find the poster for this video
+    foreach($page->images() as $i) {
+      if(preg_match('!^' . preg_quote($source) . '!i', $i->name())) {
+        $poster = $i;
+        break;
+      }
+    }
+    // check for a poster
+    $poster = ($poster) ? ' poster="' . $poster->url() . '"' : false;
 
 
-    return '<video class=html5player controls="controls" ' . $postersource . ' preload="none">' .
-      $hlssource .
-      $mp4source .
-      $webmsource .
-      'Dein Browser kann HTML5-Video nicht. Nimm eine aktuelle Version. Your browser does not support the video tag, choose an other browser.' .
-      '</video>';
+    $html = '<video class="video"' . $poster . ' width="' . $width . '" height="' . $height . '" data-name="' . $name . '" preload="none">';     
+    foreach($videos as $video) {
+      $type = '';
+      if (strpos($video->url(),'.mp4') !== false) {
+        $type = 'type="video/mp4"';
+      } elseif (strpos($video->url(),'.ogv') !== false) {
+        $type = 'type="video/ogg"';
+      } elseif (strpos($video->url(),'.webm') !== false) {
+        $type = 'type="video/webm"';
+      }
+      // check for hd quality
+      $hd = ($video->hd) ? ' data-quality="hd"' : '';
+      $hd = ($video->mobile) ? ' data-quality="mobile"' : '';
+      // generate the source tag for each video
+      $html .= '<source src="' . $video->url() . '"' . $hd . ' ' . $type . ' />';
+    }
+    $html .= '</video>';
+    
+    
+    return $html;
 
   }
 
