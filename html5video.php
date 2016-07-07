@@ -17,7 +17,8 @@ kirbytext::$tags['sublime'] = array(
   'attr' => array(
     'width',
     'height',
-    'name'
+    'name',
+    'uid'
   ),
   'html' => function($tag) {
     $source = $tag->attr('sublime');
